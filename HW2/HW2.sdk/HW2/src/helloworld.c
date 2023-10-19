@@ -1,42 +1,41 @@
+#include "xgpio.h"
+#include "xparameters.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "xparameters.h"		// 參數集.
-#include "xgpio.h"	// 簡化PS對PL的GPIO操作的函數庫.
 
-// 延遲用.
-void delay(int dly)
-{
+void delay(int dly) {
     int i, j;
     for (i = 0; i < dly; i++) {
-    	for (j = 0; j < 0xffff; j++) {
-    		;
+        for (j = 0; j < 0xffff; j++) {
+            ;
         }
     }
 }
 
-// 主程式.
-int main()
-{
-    XGpio LED_XGpio;		// 宣告一個GPIO用的結構.
-    int LED_num = 0b00000000;	// 宣告一個變數,做運算用暫存用.
+int main() {
+    XGpio LED_XGpio, SW_XGpio;
+    int LED_num = 0b00000000;
     int SW_num = 0b00000000;
+    u32 dir;
 
-    XGpio_Initialize(&LED_XGpio, XPAR_AXI_GPIO_0_DEVICE_ID);	// 初始化LED_XGpio.
-    XGpio_SetDataDirection(&LED_XGpio, 1, 0);		// 設置通道.
+    XGpio_Initialize(&LED_XGpio, XPAR_AXI_GPIO_0_DEVICE_ID);
+    XGpio_SetDataDirection(&LED_XGpio, 1, 0);
+    dir = XGpio_GetDataDirection(&LED_XGpio, 1);
+    printf("led1:%x\n", dir);
+
+    XGpio_Initialize(&SW_XGpio, XPAR_AXI_GPIO_1_DEVICE_ID);
+    XGpio_SetDataDirection(&SW_XGpio, 1, 1);
+    dir = XGpio_GetDataDirection(&SW_XGpio, 1);
+    printf("sw1:%x\n", dir);
 
     printf("Start!!!");
 
-    while(1) {
-    	printf("LED_num = 0x%x\n", LED_num);
+    while (1) {
+        SW_num = XGpio_DiscreteRead(&SW_XGpio, 1);
+        LED_num = SW_num + 1;
+        XGpio_DiscreteWrite(&LED_XGpio, 1, LED_num);
 
-    	XGpio_DiscreteWrite(&LED_XGpio, 1, LED_num);		// LED_XGpio通道,送LED_num值進去.
-
-
-    	LED_num = LED_num + 1;		// LED_num變數反相.
-
-    	delay(200);
-
-
+        delay(200);
     }
 
     return 0;
